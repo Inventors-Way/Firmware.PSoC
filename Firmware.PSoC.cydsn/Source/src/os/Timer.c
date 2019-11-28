@@ -41,12 +41,7 @@ uint8_t Timer_Check(struct Timer* const self);
 
 void Timer_Add(struct Timer* const self);
 
-//void SysTickISRCallback(void);
-
-CY_ISR(TimerISR)
-{
-    ++timerCount;	
-}
+void SysTickISRCallback(void);
 
 /******************************************************************************
 *                                                                            *
@@ -58,7 +53,6 @@ void Timer_Initialize(void)
 {
     timers = NULL;
     timerCount = 0;
-	/*
     uint8 i;
        
     CySysTickStart();
@@ -69,9 +63,7 @@ void Timer_Initialize(void)
             CySysTickSetCallback(i, SysTickISRCallback);
             break;
         }
-    }*/
-	TimerISR_StartEx(TimerISR);
-	SysTimer_Start();
+    }
 }
 
 
@@ -144,11 +136,11 @@ void Timer_Stop(struct Timer* self)
  *                       Private Function Implementation                      *
  *                                                                            *
  ******************************************************************************/
-/*
+
 void SysTickISRCallback(void)
 {
     ++timerCount;
-}*/
+}
 
 uint32_t Timer_GetElapsedTime(const uint32_t time)
 {

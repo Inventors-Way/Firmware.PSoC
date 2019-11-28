@@ -76,7 +76,7 @@ void System_Initialize(void)
     System_CreateHandlers();
 	System_InitializeHandlers();
 	timer = Timer_Create(0U, System_OnTimer);
-	Timer_Start(timer, TIMER_PERIODIC, 1000);
+	Timer_Start(timer, TIMER_PERIODIC, 500);
 }
 
 void System_Run(void)
