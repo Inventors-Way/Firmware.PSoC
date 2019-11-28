@@ -34,6 +34,13 @@ void Buffer_Create(Buffer* const self, const uint32_t size, const uint32_t eleme
    self->data = malloc(size*elementSize);
 }
 
+void Buffer_Initialize(Buffer* const self)
+{
+   self->start = 0U;
+   self->end = 0U;
+   self->count = 0U;
+}
+
 uint8_t Buffer_IsEmpty(const Buffer* const self)
 {
    return self->count == 0;

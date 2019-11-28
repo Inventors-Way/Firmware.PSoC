@@ -38,7 +38,7 @@ void Packet_HandleReceivingData(Packet* self, uint8_t data);
 uint8_t Packet_HandleWaitingForETX(Packet* self, uint8_t data);
 void Packet_HandleAddData(Packet* self, uint8_t data);
 
-inline void Packet_SendDataByte(const uint8_t data)
+void Packet_SendDataByte(const uint8_t data)
 {
 	if (data == DLE)
 	{
@@ -133,6 +133,20 @@ void Packet_SendNotAcknowledge(const uint8_t errorCode)
 	SerialPort_Write(ETX);
 }
 
+void Packet_InsertUint8(Packet* self, uint8_t pos, uint8_t data) { Stream_InsertUint8(self->data, pos, data); }
+void Packet_InsertInt8(Packet* self, uint8_t pos, int8_t data) { Stream_InsertInt8(self->data, pos, data); }
+void Packet_InsertUint16(Packet* self, uint8_t pos, uint16_t data) { Stream_InsertUint16(self->data, pos, data); }
+void Packet_InsertInt16(Packet* self, uint8_t pos, int16_t data) { Stream_InsertInt16(self->data, pos, data); }
+void Packet_InsertUint32(Packet* self, uint8_t pos, uint32_t data) { Stream_InsertUint32(self->data, pos, data); }
+void Packet_InsertInt32(Packet* self, uint8_t pos, int32_t data) { Stream_InsertInt32(self->data, pos, data); }
+void Packet_InsertString(Packet* self, uint8_t pos, int8_t size, char* str) { Stream_InsertString(self->data, pos, size, str); }
+
+uint8_t Packet_GetUint8(Packet* self, uint8_t pos) { return Stream_GetUint8(self->data, pos); }
+int8_t Packet_GetInt8(Packet* self, uint8_t pos) { return Stream_GetInt8(self->data, pos); }
+uint16_t Packet_GetUint16(Packet* self, uint8_t pos) { return Stream_GetUint16(self->data, pos); }
+int16_t Packet_GetInt16(Packet* self, uint8_t pos) { return Stream_GetInt16(self->data, pos); }
+uint32_t Packet_GetUint32(Packet* self, uint8_t pos) { return Stream_GetUint32(self->data, pos); }
+int32_t Packet_GetInt32(Packet* self, uint8_t pos) { return Stream_GetInt32(self->data, pos); }
 
 /******************************************************************************
 *                                                                            *

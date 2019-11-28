@@ -2,6 +2,7 @@
 #include <os/System.h>
 #include <os/Buffer.h>
 #include <os/Timer.h>
+#include <os/Message.h>
 #include <srv/serial/SerialHandler.h>
 #include "TimerInt.h"
 
@@ -44,6 +45,7 @@ struct Task* System_InsertTask(struct Task* const self);
 
 void System_OnTimer(void* vself);
 
+struct Timer* timer;
 
 /** @} @} */
 
@@ -68,17 +70,20 @@ struct Task* System_CreateTask(void)
 
 void System_Initialize(void)
 {
-    CyGlobalIntEnable; /* Enable global interrupts. */    
+    CyGlobalIntEnable; /* Enable global interrupts. */  
     Buffer_Create(&msgQueue, 512, sizeof(uint64_t));
     Timer_Initialize();
     System_CreateHandlers();
 	System_InitializeHandlers();
+	timer = Timer_Create(0U, System_OnTimer);
+	Timer_Start(timer, TIMER_PERIODIC, 1000);
 }
 
 void System_Run(void)
 {   
     Timer_Run();
-    System_Notify();       
+    System_Notify();    
+	System_RunHandlers();
 }
 
 #define MAX_STRING_LENGTH 255
@@ -220,3 +225,10 @@ struct Task* System_InsertTask(struct Task* const self)
     return self;
 }
 
+void System_OnTimer(void* vself)
+{
+	static uint8_t toogle = 0;
+	LED01_Write(toogle);
+	
+	toogle = !toogle ? 0xFF : 0;
+}

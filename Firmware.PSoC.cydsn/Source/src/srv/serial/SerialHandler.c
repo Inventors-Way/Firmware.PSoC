@@ -2,7 +2,6 @@
 #include "Packet.h"
 #include <os/System.h>
 #include <stdlib.h>
-#include <os/Timer.h>
 #include "SerialPort.h"
 #include <project.h>
 #include <string.h>
@@ -21,12 +20,8 @@ enum CommError
 
 struct SerialHandler
 {
-   uint8_t cableCount;
-
    Packet mResponse;
    Packet mRequest;
-
-   struct Timer* functionTimer;
 };
 
 void SerialHandler_Initialize(void* vself);
@@ -45,23 +40,20 @@ void SerialHandler_GetEndianness(struct SerialHandler* self);
 void SerialHandler_Create(struct Task* task)
 {
    struct SerialHandler* self = (struct SerialHandler *) malloc(sizeof(struct SerialHandler));  
-   self->functionTimer = Timer_Create(self, SerialHandler_Run);
 
    task->vself = self;
    task->id = HID_SERIAL_HANDLER;
    task->initialize = SerialHandler_Initialize;
    task->process = SerialHandler_ProcessMessages;
+   task->run = SerialHandler_Run;
 }
 
 void SerialHandler_Initialize(void* vself)
 {
-   struct SerialHandler* self = (struct SerialHandler*) vself;
-   
+   struct SerialHandler* self = (struct SerialHandler*) vself;   
    Packet_Initialize(&self->mRequest);
    Packet_Initialize(&self->mResponse);   
-   Timer_Start(self->functionTimer, TIMER_PERIODIC, 20);
-
-   //UART_Start();
+   SerialPort_Initialize();
 }
 
 void SerialHandler_Printf(void* vself, char* str)
@@ -85,6 +77,8 @@ void SerialHandler_Run(void* vself)
 {
     struct SerialHandler* self = (struct SerialHandler*) vself;	
 	
+	SerialPort_Run();
+	
 	while (SerialPort_IsRequestAvailable(&self->mRequest))
 	{
 	  switch (self->mRequest.code)
@@ -106,7 +100,7 @@ void SerialHandler_Run(void* vself)
 	  }    
 	
 	  Packet_Initialize(&self->mRequest);        
-	}        
+	}  	
 }
 
 void SerialHandler_ProcessMessages(void* vself, const enum MessageID  id, const uint32_t data)

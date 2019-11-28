@@ -46,8 +46,6 @@ void Timer_Start(struct Timer* self, enum TimerType type, uint32_t period);
  */
 void Timer_Stop(struct Timer* self);
 
-void Timer_Suspend(void);
-
 /** @}*/
 
 #endif

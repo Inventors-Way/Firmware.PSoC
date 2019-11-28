@@ -9,6 +9,12 @@
 *                                                                            *
 ******************************************************************************/
 
+enum PortState
+{
+	PORT_IDLE = 0,
+	PORT_TRANSMIT_ZERO_PACKET
+};
+
 #define USBFS_DEVICE    (0u)
 
 /* The buffer size is equal to the maximum packet size of the IN and OUT bulk
@@ -25,6 +31,7 @@ void SerialPort_WriteUSB(void);
 
 Buffer txBuffer;
 Buffer rxBuffer;
+enum PortState portState;
 
 /******************************************************************************
 *                                                                            *
@@ -38,28 +45,30 @@ void SerialPort_Initialize(void)
 	Buffer_Create(&rxBuffer, PORT_BUFFER_SIZE, 1);
 	
     /* Start USBFS operation with 5-V operation. */
-    USBUART_Start(USBFS_DEVICE, USBUART_5V_OPERATION);
-    
-    for(;;)
-    {
-        /* Host can send double SET_INTERFACE request. */
-        if (0u != USBUART_IsConfigurationChanged())
-        {
-            /* Initialize IN endpoints when device is configured. */
-            if (0u != USBUART_GetConfiguration())
-            {
-                /* Enumeration is done, enable OUT endpoint to receive data 
-                 * from host. */
-                USBUART_CDC_Init();
-            }
-        }
-	}	
+    USBUART_Start(USBFS_DEVICE, USBUART_5V_OPERATION);   
+	portState = PORT_IDLE;
 }
 
 void SerialPort_Run(void)
 {
-	SerialPort_ReadUSB();
-	SerialPort_WriteUSB();
+    if (0u != USBUART_IsConfigurationChanged())
+    {
+        /* Initialize IN endpoints when device is configured. */
+        if (0u != USBUART_GetConfiguration())
+        {
+            /* Enumeration is done, enable OUT endpoint to receive data 
+             * from host. */
+            USBUART_CDC_Init();
+			Buffer_Initialize(&txBuffer);
+			Buffer_Initialize(&rxBuffer);
+        }
+    }
+	
+    if (0u != USBUART_GetConfiguration())
+	{
+		SerialPort_ReadUSB();
+		SerialPort_WriteUSB();
+	}
 }
 
 void SerialPort_Write(const uint8_t data)
@@ -104,9 +113,10 @@ uint8_t SerialPort_Read(uint8_t* data)
     return retValue;
 }
 
+
 void SerialPort_ReadUSB(void)
 {
-	uint8_t buffer[USBUART_BUFFER_SIZE];
+	static uint8_t buffer[USBUART_BUFFER_SIZE];
 	
     if (0u != USBUART_DataIsReady())
     {
@@ -129,5 +139,37 @@ void SerialPort_ReadUSB(void)
 
 void SerialPort_WriteUSB(void)
 {
-	
+	static uint8_t buffer[USBUART_BUFFER_SIZE];
+	uint8_t count = 0;
+
+	switch (portState)
+	{
+		case PORT_IDLE:
+			if (!Buffer_IsEmpty(&txBuffer))
+			{
+				while (!Buffer_IsEmpty(&txBuffer) && count < USBUART_BUFFER_SIZE)
+				{
+					buffer[count] = *((uint8_t *) Buffer_Read(&txBuffer));
+					++count;
+				}
+				
+	            USBUART_PutData(buffer, count);
+
+	            /* If the last sent packet is exactly the maximum packet 
+	            *  size, it is followed by a zero-length packet to assure
+	            *  that the end of the segment is properly identified by 
+	            *  the terminal.
+	            */
+	            portState = USBUART_BUFFER_SIZE == count ? PORT_TRANSMIT_ZERO_PACKET : PORT_IDLE;
+			}
+			break;
+		case PORT_TRANSMIT_ZERO_PACKET:
+			if (USBUART_CDCIsReady())
+			{
+				/* Send zero-length packet to PC. */
+				USBUART_PutData(NULL, 0u);		
+				portState = PORT_IDLE;
+			}
+			break;
+	}	
 }
