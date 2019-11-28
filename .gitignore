@@ -1,3 +1,9 @@
+# Build Libraries
+Firmware.PSoC.cydsn/ARM_GCC_541
+Firmware.PSoC.cydsn/codegentemp
+Firmware.PSoC.cydsn/Export
+Firmware.PSoC.cydsn/Generated_Source
+
 # Prerequisites
 *.d
 
@@ -50,3 +56,10 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+Firmware.PSoC.cydsn/BUILD.log
+*.KristianHennings
+Firmware.PSoC.cydsn/REBUILD.log
+Firmware.PSoC.cydsn/Firmware.PSoC.cycdx
+Firmware.PSoC.cydsn/Firmware.PSoC.svd
+Firmware.PSoC.cydsn/Firmware.PSoC.rpt
+Firmware.PSoC.cydsn/Firmware.PSoC_timing.html
