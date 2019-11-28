@@ -70,9 +70,8 @@ void System_Initialize(void)
 {
     CyGlobalIntEnable; /* Enable global interrupts. */    
     Buffer_Create(&msgQueue, 512, sizeof(uint64_t));
-    System_CreateHandlers();
-	Buffer_Initialize(&msgQueue);
     Timer_Initialize();
+    System_CreateHandlers();
 	System_InitializeHandlers();
 }
 

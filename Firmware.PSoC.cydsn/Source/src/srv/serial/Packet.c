@@ -38,7 +38,19 @@ void Packet_HandleReceivingData(Packet* self, uint8_t data);
 uint8_t Packet_HandleWaitingForETX(Packet* self, uint8_t data);
 void Packet_HandleAddData(Packet* self, uint8_t data);
 
-void Packet_SendDataByte(uint8_t data);
+inline void Packet_SendDataByte(const uint8_t data)
+{
+	if (data == DLE)
+	{
+		SerialPort_Write(DLE);
+		SerialPort_Write(DLE);
+	}
+	else
+	{
+		SerialPort_Write(data);
+	}
+}
+
 
 #define PACKET_BUFFER_SIZE 256
 uint8_t buffer[PACKET_BUFFER_SIZE];
@@ -96,63 +108,27 @@ void Packet_CreateMessage(Packet* self, const uint8_t code, const uint8_t length
 
 void Packet_Send(Packet* self)
 {
-	uint32_t length = 0;
-	uint8_t i;
-	uint8_t data;
-	
-	buffer[length] = DLE; ++length;
-	buffer[length] = STX; ++length;
+	SerialPort_Write(DLE); 
+	SerialPort_Write(STX);
+	Packet_SendDataByte(self->code);
+	Packet_SendDataByte(self->length);
 
-	if (self->code == DLE)
+	for (uint8_t i = 0; i < self->length; ++i)
 	{
-		buffer[length] = DLE; ++length;
-		buffer[length] = DLE; ++length;
-	}
-	else
-	{
-		buffer[length] = self->code; ++length;
+		Packet_SendDataByte(self->data[i]);
 	}
 
-	if (self->length == DLE)
-	{
-		buffer[length] = DLE; ++length;
-		buffer[length] = DLE; ++length;
-	}
-	else
-	{
-		buffer[length] = self->length; ++length;
-	}
-
-	for (i = 0; i < self->length; ++i)
-	{
-		data = self->data[i];
-
-		if (data == DLE)
-		{
-			buffer[length] = DLE; ++length;
-			buffer[length] = DLE; ++length;
-		}
-		else
-		{
-			buffer[length] = data; ++length;
-		}
-	}
-
-	buffer[length] = DLE; ++length;
-	buffer[length] = ETX; ++length;
-
-	SerialPort_WriteArray(buffer, length);
+	SerialPort_Write(DLE);
+	SerialPort_Write(ETX);
 }
 
 void Packet_SendNotAcknowledge(const uint8_t errorCode)
 {
 	SerialPort_Write(DLE);
-	SerialPort_Write(STX);
-	
+	SerialPort_Write(STX);	
 	Packet_SendDataByte(0U);
 	Packet_SendDataByte(1U);
-    Packet_SendDataByte(errorCode);
-	
+	Packet_SendDataByte(errorCode);	
 	SerialPort_Write(DLE);
 	SerialPort_Write(ETX);
 }
@@ -163,19 +139,6 @@ void Packet_SendNotAcknowledge(const uint8_t errorCode)
 *                       Private Function Implementation                      *
 *                                                                            *
 ******************************************************************************/
-
-void Packet_SendDataByte(uint8_t data)
-{
-	if (data == DLE)
-	{
-		SerialPort_Write(DLE);
-		SerialPort_Write(DLE);
-	}
-	else
-	{
-		SerialPort_Write(data);
-	}
-}
 
 void Packet_HandleWaitingForDLE(Packet* self, uint8_t data)
 {

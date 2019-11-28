@@ -31,14 +31,6 @@ typedef struct
 void Buffer_Create(Buffer* const self, const uint32_t size, const uint32_t elementSize);
 
 /**
- * \brief Initialize the buffer
- * 
- * \param self pointer to self
- * \param size the size of the buffer
- */
-void Buffer_Initialize(Buffer* const self);
-
-/**
  * \brief Check if the buffer is empty
  * 
  * \param self pointer to self

@@ -1,5 +1,6 @@
 #include "SerialPort.h"
 #include <srv/serial/SerialHandler.h>
+#include <os/Buffer.h>
 #include <project.h>
 
 /******************************************************************************
@@ -8,8 +9,22 @@
 *                                                                            *
 ******************************************************************************/
 
+#define USBFS_DEVICE    (0u)
+
+/* The buffer size is equal to the maximum packet size of the IN and OUT bulk
+* endpoints.
+*/
+#define USBUART_BUFFER_SIZE (64u)
+#define PORT_BUFFER_SIZE    (512u)
 
 uint8_t SerialPort_Read(uint8_t* data);
+
+void SerialPort_ReadUSB(void);
+
+void SerialPort_WriteUSB(void);
+
+Buffer txBuffer;
+Buffer rxBuffer;
 
 /******************************************************************************
 *                                                                            *
@@ -17,31 +32,43 @@ uint8_t SerialPort_Read(uint8_t* data);
 *                                                                            *
 ******************************************************************************/
 
-void SerialPort_WriteArray(const uint8_t * const data, const uint32_t length)
+void SerialPort_Initialize(void)
 {
-    switch (port)
+	Buffer_Create(&txBuffer, PORT_BUFFER_SIZE, 1);
+	Buffer_Create(&rxBuffer, PORT_BUFFER_SIZE, 1);
+	
+    /* Start USBFS operation with 5-V operation. */
+    USBUART_Start(USBFS_DEVICE, USBUART_5V_OPERATION);
+    
+    for(;;)
     {
-        case PORT_DEBUG:
-            for (uint32_t n = 0; n < length; ++n)
+        /* Host can send double SET_INTERFACE request. */
+        if (0u != USBUART_IsConfigurationChanged())
+        {
+            /* Initialize IN endpoints when device is configured. */
+            if (0u != USBUART_GetConfiguration())
             {
-                UART_UartPutChar(data[n]);
+                /* Enumeration is done, enable OUT endpoint to receive data 
+                 * from host. */
+                USBUART_CDC_Init();
             }
-            break;
-        default:
-            break;
-    }
+        }
+	}	
+}
+
+void SerialPort_Run(void)
+{
+	SerialPort_ReadUSB();
+	SerialPort_WriteUSB();
 }
 
 void SerialPort_Write(const uint8_t data)
 {
-    switch (port)
-    {
-        case PORT_DEBUG:
-            UART_UartPutChar(data);
-            break;
-        default:
-            break;
-    }
+	if (!Buffer_IsFull(&txBuffer))
+	{
+		uint8_t* ptr = (uint8_t *) Buffer_Write(&txBuffer);
+		*ptr = data;
+	}
 }
 
 uint8_t SerialPort_IsRequestAvailable(Packet* packet)
@@ -64,35 +91,43 @@ uint8_t SerialPort_IsRequestAvailable(Packet* packet)
 *                                                                            *
 ******************************************************************************/
 
-uint32_t SerialPort_ReadData(const enum Port port)
+uint8_t SerialPort_Read(uint8_t* data)
 {
-    uint32_t retValue = UART_UART_RX_UNDERFLOW;
-    
-    switch (port)
-    {
-        case PORT_DEBUG:
-            retValue = UART_UartGetByte();  
-            break;
-        default:
-            break;
+    uint8_t retValue = 0;
+        
+	if (!Buffer_IsEmpty(&rxBuffer))
+	{
+        *data = *((uint8_t *) Buffer_Read(&rxBuffer));
+        retValue = 1;
     }
     
     return retValue;
 }
 
-uint8_t SerialPort_Read(uint8_t* data)
+void SerialPort_ReadUSB(void)
 {
-    const uint32_t input = SerialPort_ReadData(port);
-    uint8_t retValue = 0;
-        
-    if (!SerialPort_RxFramingError(input) && 
-        !SerialPort_RxParityError(input) &&
-        !SerialPort_RxOverflow(input) &&
-        !SerialPort_RxUnderflow(input))
+	uint8_t buffer[USBUART_BUFFER_SIZE];
+	
+    if (0u != USBUART_DataIsReady())
     {
-        retValue = 1;
-        *data = (uint8_t) (0x000000FF & input);
-    }
-    
-    return retValue;
+        /* Read received data and re-enable OUT endpoint. */
+        const uint32_t count = USBUART_GetAll(buffer);
+
+        if (0u != count)
+        {
+			for (uint8_t n = 0; n < count; ++n)
+			{
+				if (!Buffer_IsFull(&rxBuffer))
+				{
+					uint8_t* ptr = (uint8_t *) Buffer_Write(&rxBuffer);
+					*ptr = buffer[n];
+				}
+			}
+		}
+	}			
+}
+
+void SerialPort_WriteUSB(void)
+{
+	
 }

@@ -14,9 +14,11 @@
 #include "Packet.h"    
 #include <os/System.h>    
        
-void SerialPort_Write(const uint8_t data);
+void SerialPort_Initialize(void);
 
-void SerialPort_WriteArray(const uint8_t * const data, const uint32_t length);
+void SerialPort_Run(void);
+
+void SerialPort_Write(const uint8_t data);
 
 uint8_t SerialPort_IsRequestAvailable(Packet* self);
 
