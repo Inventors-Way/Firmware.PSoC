@@ -56,9 +56,8 @@ void SerialHandler_Initialize(void* vself)
    SerialPort_Initialize();
 }
 
-void SerialHandler_Printf(void* vself, char* str)
+void SerialHandler_Printf(__attribute__((unused)) void* vself, char* str)
 {	
-    struct SerialHandler* self = (struct SerialHandler*) vself;	
 	const uint8_t length = strlen(str);
 	Packet message;
 
@@ -103,9 +102,11 @@ void SerialHandler_Run(void* vself)
 	}  	
 }
 
-void SerialHandler_ProcessMessages(void* vself, const enum MessageID  id, const uint32_t data)
+void SerialHandler_ProcessMessages(__attribute__((unused)) void* vself, 
+                                   __attribute__((unused)) const enum MessageID  id, 
+								   __attribute__((unused)) const uint32_t data)
 {
-	struct SerialHandler* self = (struct SerialHandler*) vself;	
+	//struct SerialHandler* self = (struct SerialHandler*) vself;	
 }
 
 /******************************************************************************

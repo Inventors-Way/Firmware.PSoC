@@ -226,7 +226,7 @@ struct Task* System_InsertTask(struct Task* const self)
     return self;
 }
 
-void System_OnTimer(void* vself)
+void System_OnTimer(__attribute__((unused)) void* vself)
 {
 	static uint8_t toogle = 0;
 	LED01_Write(toogle);
