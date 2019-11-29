@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <os/System.h>
+#include "SystemInt.h"
 #include <os/Buffer.h>
 #include <os/Timer.h>
 #include <os/Message.h>

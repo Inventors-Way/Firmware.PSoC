@@ -40,11 +40,19 @@ struct Task
  */
 void System_Initialize(void);
 
+/**
+ * \brief 
+ * \details
+ */
 void System_Run(void);
     
+/**
+ * \brief Printf for debugging purposes.
+ * \details
+ *
+ * \param[in] format string to print and format instructions for subsequent parameters to the function
+ */
 void System_Printf(const char* format, ...);
-
-void System_DispatchMessage(const uint64_t msg);
 
 /** @}*/
 

@@ -1,6 +1,7 @@
 #include <os/Message.h>
 #include <stdlib.h>
 #include <os/System.h>
+#include "SystemInt.h"
 
 /******************************************************************************
 *                                                                            *
