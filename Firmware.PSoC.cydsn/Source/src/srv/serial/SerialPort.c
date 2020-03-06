@@ -23,15 +23,26 @@ enum PortState
 #define USBUART_BUFFER_SIZE (64u)
 #define PORT_BUFFER_SIZE    (512u)
 
-uint8_t SerialPort_Read(uint8_t* data);
+Buffer txBuffer;
+Buffer rxBuffer;
+enum PortState portState;
 
 void SerialPort_ReadUSB(void);
 
 void SerialPort_WriteUSB(void);
 
-Buffer txBuffer;
-Buffer rxBuffer;
-enum PortState portState;
+uint8_t SerialPort_Read(uint8_t* data)
+{
+    uint8_t retValue = 0;
+        
+	if (!Buffer_IsEmpty(&rxBuffer))
+	{
+        *data = *((uint8_t *) Buffer_Read(&rxBuffer));
+        retValue = 1;
+    }
+    
+    return retValue;
+}
 
 /******************************************************************************
 *                                                                            *
@@ -99,20 +110,6 @@ uint8_t SerialPort_IsRequestAvailable(Packet* packet)
 *                       Private Function Implementation                      *
 *                                                                            *
 ******************************************************************************/
-
-uint8_t SerialPort_Read(uint8_t* data)
-{
-    uint8_t retValue = 0;
-        
-	if (!Buffer_IsEmpty(&rxBuffer))
-	{
-        *data = *((uint8_t *) Buffer_Read(&rxBuffer));
-        retValue = 1;
-    }
-    
-    return retValue;
-}
-
 
 void SerialPort_ReadUSB(void)
 {
